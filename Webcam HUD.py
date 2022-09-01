@@ -8,6 +8,39 @@ from PIL import ImageFont, ImageDraw, Image
 import psutil
 
 
+try:
+    import httplib  # python < 3.0
+except:
+    import http.client as httplib
+
+
+def have_internet():
+    conn = httplib.HTTPSConnection("8.8.8.8", timeout=5)
+    try:
+        conn.request("HEAD", "/")
+        return True
+    except Exception:
+        return False
+    finally:
+        conn.close()
+
+def convertTime(seconds):
+    minutes, seconds = divmod(seconds, 60)
+    hours, minutes = divmod(minutes, 60)
+    return "%d:%02d:%02d" % (hours, minutes, seconds)
+
+def batcheck():
+    global battery
+    battery = psutil.sensors_battery()
+    if battery != None:
+        global plugged
+        plugged = battery.power_plugged
+        global batteryRemaining
+        batteryRemaining = convertTime(battery.secsleft)
+        global batteryPercentage
+        batteryPercentage = str(battery.percent)
+
+
 def job():
     USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.127 Safari/537.36"
     # US english
@@ -80,22 +113,22 @@ def job():
     global displayPrecipitation
     displayPrecipitation = data['precipitation']
 
-    def convertTime(seconds):
-        minutes, seconds = divmod(seconds, 60)
-        hours, minutes = divmod(minutes, 60)
-        return "%d:%02d:%02d" % (hours, minutes, seconds)
 
-    # battery = psutil.sensors_battery()
-    # global isPowerPluggedIn
-    # isPowerPluggedIn = battery.power_plugged
-    # global batteryRemaining
-    # batteryRemaining = convertTime(battery.secsleft)
-    # global batteryPercentage
-    # batteryPercentage = str(battery.percent)
+if have_internet():
+    job()
+    schedule.every(1).minutes.do(job)
+else:
+    global displayTemp
+    displayTemp = 'N/A'
+    global displayHumidity
+    displayHumidity = 'N/A'
+    global displayWeather
+    displayWeather = 'N/A'
+    global displayPrecipitation
+    displayPrecipitation = 'N/A'
 
-
-job()
-schedule.every(1).minutes.do(job)
+batcheck()
+schedule.every(1).minutes.do(batcheck)
 # declaring font
 img = np.zeros((512, 512, 3), np.uint8)
 font = cv2.FONT_HERSHEY_SIMPLEX
@@ -125,12 +158,22 @@ while True:
     draw.rectangle(box2, fill="#FFFFFF", outline="#000")
     draw.rectangle(box3, fill="#FFFFFF", outline="#000")
     font = ImageFont.truetype("arial.ttf", 32, encoding="unic")
-    draw.text((10, 10), displayTemp + '°', font=font, fill="#000")
-    draw.text((10, 40), displayHumidity, font=font, fill="#000")
-    draw.text((570, 10), displayPrecipitation, font=font, fill="#000")
-    # draw.text((305, 10), batteryPercentage, font=font, fill="#000")
-    # draw.text((305, 10), isPowerPluggedIn, font=font, fill="#000")
-    # draw.text((305, 10), batteryRemaining, font=font, fill="#000")
+    if have_internet():
+        draw.text((10, 10), displayTemp + '°', font=font, fill="#000")
+        draw.text((10, 40), displayHumidity, font=font, fill="#000")
+        draw.text((570, 10), displayPrecipitation, font=font, fill="#000")
+    else:
+        draw.text((10, 10), 'N/A', font=font, fill="#000")
+        draw.text((10, 40), 'N/A', font=font, fill="#000")
+        draw.text((570, 10), 'N/A', font=font, fill="#000")
+    if battery != None:
+        draw.text((305, 10), batteryPercentage, font=font, fill="#000")
+        draw.text((305, 10), plugged, font=font, fill="#000")
+        draw.text((305, 10), batteryRemaining, font=font, fill="#000")
+    else:
+        draw.text((305, 10), 'N/A', font=font, fill="#000")
+        draw.text((305, 40), 'N/A', font=font, fill="#000")
+        draw.text((375, 10), 'N/A', font=font, fill="#000")
     font = ImageFont.truetype("arial.ttf", 15, encoding="unic")
     if len(displayWeather.split()) > 1:
         topDisplayWeather, bottomDisplayWeather = displayWeather.split(' ', 1)
