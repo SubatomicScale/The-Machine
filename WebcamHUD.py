@@ -1,12 +1,22 @@
+# Copyright 2022 expenadableAnomaly
+# Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
+# documentation files (the "Software"), to deal in the Software without restriction, including without limitation the
+# rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit
+# persons to whom the Software is furnished to do so, subject to the following conditions: The above copyright notice and
+# this permission notice shall be included in all copies or substantial portions of the Software.
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
+# WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+# COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+# OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+
 import cv2
 import numpy as np
-import time
 import schedule
 import requests
 from bs4 import BeautifulSoup as bs
 from PIL import ImageFont, ImageDraw, Image
 import psutil
-
 
 try:
     import httplib  # python < 3.0
@@ -24,10 +34,12 @@ def have_internet():
     finally:
         conn.close()
 
+
 def convertTime(seconds):
     minutes, seconds = divmod(seconds, 60)
     hours, minutes = divmod(minutes, 60)
     return "%d:%02d:%02d" % (hours, minutes, seconds)
+
 
 def batcheck():
     global battery
@@ -117,6 +129,10 @@ def job():
 if have_internet():
     job()
     schedule.every(1).minutes.do(job)
+
+
+    class Guh:
+        guh = 1
 else:
     global displayTemp
     displayTemp = 'N/A'
@@ -126,6 +142,10 @@ else:
     displayWeather = 'N/A'
     global displayPrecipitation
     displayPrecipitation = 'N/A'
+
+
+    class Guh:
+        guh = 0
 
 batcheck()
 schedule.every(1).minutes.do(batcheck)
@@ -158,7 +178,7 @@ while True:
     draw.rectangle(box2, fill="#FFFFFF", outline="#000")
     draw.rectangle(box3, fill="#FFFFFF", outline="#000")
     font = ImageFont.truetype("arial.ttf", 32, encoding="unic")
-    if have_internet():
+    if Guh.guh == 1:
         draw.text((10, 10), displayTemp + '°', font=font, fill="#000")
         draw.text((10, 40), displayHumidity, font=font, fill="#000")
         draw.text((570, 10), displayPrecipitation, font=font, fill="#000")
