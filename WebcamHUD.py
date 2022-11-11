@@ -9,7 +9,6 @@
 # COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
 # OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-
 import cv2
 import numpy as np
 import schedule
@@ -17,6 +16,7 @@ import requests
 from bs4 import BeautifulSoup as bs
 from PIL import ImageFont, ImageDraw, Image
 import psutil
+
 
 try:
     import httplib  # python < 3.0
@@ -33,13 +33,12 @@ def have_internet():
         return False
     finally:
         conn.close()
-
+guhBool = have_internet()
 
 def convertTime(seconds):
     minutes, seconds = divmod(seconds, 60)
     hours, minutes = divmod(minutes, 60)
     return "%d:%02d:%02d" % (hours, minutes, seconds)
-
 
 def batcheck():
     global battery
@@ -73,34 +72,12 @@ def job():
         result['region'] = soup.find("div", attrs={"id": "wob_loc"}).text
         # extract temperature now
         result['temp_now'] = soup.find("span", attrs={"id": "wob_tm"}).text
-        # get the day and hour now
-        result['dayhour'] = soup.find("div", attrs={"id": "wob_dts"}).text
         # get the actual weather
         result['weather_now'] = soup.find("span", attrs={"id": "wob_dc"}).text
-
         # get the precipitation
         result['precipitation'] = soup.find("span", attrs={"id": "wob_pp"}).text
         # get the % of humidity
         result['humidity'] = soup.find("span", attrs={"id": "wob_hm"}).text
-        # extract the wind
-        result['wind'] = soup.find("span", attrs={"id": "wob_ws"}).text
-
-        # get next few days' weather
-        next_days = []
-        days = soup.find("div", attrs={"id": "wob_dp"})
-        for day in days.findAll("div", attrs={"class": "wob_df"}):
-            # extract the name of the day
-            day_name = day.findAll("div")[0].attrs['aria-label']
-            # get weather status for that day
-            weather = day.find("img").attrs["alt"]
-            temp = day.findAll("span", {"class": "wob_t"})
-            # maximum temparature in Celsius, use temp[1].text if you want fahrenheit
-            max_temp = temp[0].text
-            # minimum temparature in Celsius, use temp[3].text if you want fahrenheit
-            min_temp = temp[2].text
-            next_days.append({"name": day_name, "weather": weather, "max_temp": max_temp, "min_temp": min_temp})
-        # append to result
-        result['next_days'] = next_days
         return result
 
     URL = "https://www.google.com/search?lr=lang_en&ie=UTF-8&q=weather"
@@ -126,13 +103,9 @@ def job():
     displayPrecipitation = data['precipitation']
 
 
-if have_internet():
+if guhBool:
     job()
     schedule.every(1).minutes.do(job)
-
-
-    class Guh:
-        guh = 1
 else:
     global displayTemp
     displayTemp = 'N/A'
@@ -142,10 +115,6 @@ else:
     displayWeather = 'N/A'
     global displayPrecipitation
     displayPrecipitation = 'N/A'
-
-
-    class Guh:
-        guh = 0
 
 batcheck()
 schedule.every(1).minutes.do(batcheck)
@@ -178,7 +147,7 @@ while True:
     draw.rectangle(box2, fill="#FFFFFF", outline="#000")
     draw.rectangle(box3, fill="#FFFFFF", outline="#000")
     font = ImageFont.truetype("arial.ttf", 32, encoding="unic")
-    if Guh.guh == 1:
+    if guhBool:
         draw.text((10, 10), displayTemp + '°', font=font, fill="#000")
         draw.text((10, 40), displayHumidity, font=font, fill="#000")
         draw.text((570, 10), displayPrecipitation, font=font, fill="#000")
@@ -204,7 +173,7 @@ while True:
     draw.text((570, 55), bottomDisplayWeather, font=font, fill="#000")
     cv2_im_processed = cv2.cvtColor(np.array(pil_im), cv2.COLOR_RGB2BGR)
 
-    img = cv2.resize(cv2_im_processed, (480, 500))
+    img = cv2.resize(cv2_im_processed, (835, 1015))
     cv2.imshow('Image thing', np.concatenate((img, img), axis=1))
 
     # waitkey
