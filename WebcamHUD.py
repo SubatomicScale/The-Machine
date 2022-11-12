@@ -43,14 +43,16 @@ def convertTime(seconds):
 def batcheck():
     global battery
     battery = psutil.sensors_battery()
-    if battery != None:
+    if battery.secsleft > 0 :
         global plugged
         plugged = battery.power_plugged
-        global batteryRemaining
-        batteryRemaining = convertTime(battery.secsleft)
         global batteryPercentage
         batteryPercentage = str(battery.percent)
 
+def secs2hours(secs):
+    mm, ss = divmod(secs,60)
+    hh, mm = divmod(mm,60)
+    return "%d:%02d:%02d:" % (hh, mm, ss)
 
 def job():
     USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.127 Safari/537.36"
@@ -155,10 +157,12 @@ while True:
         draw.text((10, 10), 'N/A', font=font, fill="#000")
         draw.text((10, 40), 'N/A', font=font, fill="#000")
         draw.text((570, 10), 'N/A', font=font, fill="#000")
-    if battery != None:
+    if battery.secsleft > 0 :
         draw.text((305, 10), batteryPercentage, font=font, fill="#000")
-        draw.text((305, 10), plugged, font=font, fill="#000")
-        draw.text((305, 10), batteryRemaining, font=font, fill="#000")
+        draw.text((305, 40), str(plugged), font=font, fill="#000")
+        #draw.text((305, 80), "time left = %s" % secs2hours(battery.secsleft), font=font, fill="#000")
+        #draw.text((305, 80), str(battery.secsleft), font=font, fill="#000")
+
     else:
         draw.text((305, 10), 'N/A', font=font, fill="#000")
         draw.text((305, 40), 'N/A', font=font, fill="#000")
@@ -173,7 +177,7 @@ while True:
     draw.text((570, 55), bottomDisplayWeather, font=font, fill="#000")
     cv2_im_processed = cv2.cvtColor(np.array(pil_im), cv2.COLOR_RGB2BGR)
 
-    img = cv2.resize(cv2_im_processed, (835, 1015))
+    img = cv2.resize(cv2_im_processed, (765, 1015))
     cv2.imshow('Image thing', np.concatenate((img, img), axis=1))
 
     # waitkey
